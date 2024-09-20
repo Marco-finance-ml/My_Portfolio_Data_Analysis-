@@ -1,0 +1,263 @@
+---
+title: "Proyecto Bellabeat"
+author: "Marco Antonio Gonzáles"
+date: "2024-09-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Bellabeat**
+
+![](C:/Users/USUARIO/Downloads/bellabeat3809 (2).jpg)
+<div style="text-align: justify;">
+Este es uno de los proyectos google en el cual consiste en la simulación que yo soy un analista de datos del equipo de marketing de Bellabeat. Bellabeat es una empresa real fundada el 2013 dedicada al rubro del cuidado fitness femenino a través de pulseras tipo smart en donde  obtienen a través del uso a lo largo del dia se calcula el peso, pasos totales, calorias eliminadas, horas de sedentarismo, entre otros. Vamos a usar datos reales sobre 940 usuarias de la plataforma de Bellabeat.
+</div>
+
+<br>
+
+![](C:/Users/USUARIO/Downloads/07sfXgsloYEMIsJAQcR8Tcp-4.v_1569469931 (1).jpg)
+
+<br>
+
+<div style="text-align: justify;">
+Urška Sršen, la fundadora nos da la orden de hacer un análisis de data sobre la cantidad de uso que se le da a la aplicación inteligente y en función del análisis realizar recomendación para la campaña de marketing.Para más detalles sobre el proyecto de Bellabeat:[Link](https://d3c33hcgiwev3.cloudfront.net/OLtArwsxSlar_y35df7xmQ_634dd308c7a04d24bdfdb9367f24d5f1_Case-Study-2_-How-can-a-wellness-technology-company-play-it-smart.pdf?Expires=1725753600&Signature=MLcc7BOsn7Dh2buWVIjLQmgnNQXpBnbJxen~mmORBGa2tBdrR4cxjMeZpScslWMnAgdXKHgN7hWDkLIsgx6SA9quXQiFicdQygHwjWK17SN5WdrmJ3w-T0SdLZmAmja12HXd0kpyvKRvagt3HYKxtKuEP-VjyuCwg2MlQ8eEtiU_&Key-Pair-Id=APKAJLTNE6QMUY6HBC5A). A continuación detallaremos y explicaremos nuestro proceso de tratamiendo de la base de datos a través de R lenguaje de programación que hemos escogido para trabajar
+</div>
+
+<br><br>
+
+## **Data Cleaning**  ##
+
+<br>
+
+Esta es una etapa inicial en el cual nos vamos a familiarizar con nuestra dato y observar y corregir datos relevantes para un posterior analisis y eficiente.
+
+<br>
+
+#### Lectura de Base de datos ####
+<br>
+Se descarga las librerias necesarios y se procede a leer la base de datos que nos proporciona el proyecto la cual se denomina ***dailyActivity_merged*** .
+<br>
+
+```{r loading packages}
+library(tidyverse)
+
+df <- read.csv("C:\\Users\\USUARIO\\Desktop\\proyect_google\\mturkfitbit_export_4.12.16-5.12.16\\Fitabase Data 4.12.16-5.12.16\\dailyActivity_merged.csv", header = TRUE)
+```
+
+<br>
+
+<div style="text-align: justify;">
+Antes de proceder con procesar y analizar esta base de datos primero tenemos que empaparnos y contextualizarnos con nuestra data, así como limpiarla, lo cual consiste en verificar si es que hay duplicados o valores nulos en la data lo cual puede impactar y sesgar los resultados generados.
+
+</div>
+
+
+
+* En primer lugar, queremos saber que columnas tiene nuestra data por lo cual nos apoyamos con la función **columname**.
+
+```{r}
+colnames(df)
+```
+
+<br>
+
+* También estamos muy interesados en conocer sus dimensiones; es decir, cuantas filas y columnas tiene la data. Nos apoyaremos con la función **dim**.
+
+
+```{r}
+dim(df)
+```
+
+<br>
+
+* Damos una mirada a las primeras observaciones para empaparnos y tener una idea sobre con que datos estamos tratando.
+<br>
+```{r}
+head(df)
+```
+
+<br>
+
+* Otro factor importante es que ver el datatype que tiene cada columna y hacer las correciones de ser necesario.
+
+
+```{r}
+str(df)
+```
+
+<br>
+
+
+* Consideramos que es conveniente tener el datatype de columna **ActivityDate** en date y la columna **Id** a caracteres.
+
+```{r}
+df$ActivityDate <- as.Date(df$ActivityDate, format="%m/%d/%Y")
+df$Id <- as.character(df$Id)
+```
+
+<br>
+
+* Verificamos si es que se corrigió correctamente.
+
+```{r}
+str(df)
+```
+
+<br>
+
+Una etapa importante del **Data Cleaning** es verificar que los datos no tenga **duplicados** ni **nulos** pues estos pueden afectar de manera significativa en los resultados y podemos obtener resultados sesgados.
+
+<br>
+
+* Verificamos si es que hay **duplicados**. En este caso; no los hay, lo cual es positivo.
+
+```{r}
+sum(duplicated(df))
+```
+
+<br>
+
+* Verificamos la cantidad de **nulos** y la cantidad es cero.
+
+```{r}
+sum(is.na(df))
+```
+
+<br><br>
+
+## **Procesamiento y Analisis de Datos**  ##
+
+<br>
+
+<div style="text-align: justify;">
+Posterior a estar más empapados nuestra base datos, corregir y verificar; podemos ahora procesar la información para sacar conclusiones y perspectivas que nos ayuden *a posteriori* realizar recomendaciones.Empezamos por ver la información estadística como medias, medianas, cuadrantes, esto es muy relevante. Lo haremos con ayuda de la función **summarize**.
+</div>
+
+```{r}
+summary(df)
+```
+
+<br>
+
+#### **Segmentación** ####
+
+
+<div style="text-align: justify;">
+Voy a optar realizar una segmentación en función a la totalidad de distancia recorrida por mes en usuario. Habiendo visto las estadistica previamente, creamos una nueva columna que llamaremos Categoría, en la cual establezco que los que hayan realizado más de 7 kilometros las denomino ágiles; las que están entre 5 y 7 kilometros, promedios; y finalmente las que hayan recorrido menos de 5 kilometros, flojas.
+
+<br>
+
+```{r}
+df$Categoría <- ifelse(
+  df$TotalDistance > 7, "Ágiles",
+  ifelse(df$TotalDistance >= 4, "Promedio", "Flojas")
+)
+```
+<br>
+Observamos si es que efectivamente se creo la nueva categoría
+```{r}
+head(df)
+```
+
+<br><br>
+
+#### **GRAFICO DE BARRAS, LINEAS Y CORRELACIONES** ####
+
+<br>
+
+Hacemos uso de herramientas visuales. En esta caso, vamos notar como se distribuyen porcentualmente las categorías recientemente creadas. Podemos observar que la categoría **Flojas** es la que resalta muy cercano al cincuenta por ciento de la totalidad.
+</div>
+
+```{r}
+ggplot(df, aes(x = Categoría)) +
+  geom_bar(aes(y = after_stat(count) / sum(after_stat(count))), 
+           fill = "skyblue", color = "black") +
+  geom_text(
+    aes(label = scales::percent(after_stat(count) / sum(after_stat(count)), accuracy = 1)),
+    stat = "count",
+    vjust = -0.5  # Ajusta la posición vertical del texto
+  ) +
+  labs(
+    x = "Categoría",
+    y = "Porcentaje",
+    title = "Distribución en función a la Distancia total por Categoría"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1)) +
+  theme_minimal() 
+```
+<br>
+
+```{r pressure, echo=FALSE}
+
+ggplot(df, aes(x = TotalSteps, y = Calories)) +
+  geom_point(color = "#1E90FF", size = 2.5, alpha = 0.7) +  
+  geom_smooth(method = "lm", color = "#2C3E50", linetype = "dashed", se = FALSE) +  
+  labs(
+    x = "Total de Pasos",
+    y = "Calorías",
+    title = "Correlación entre Pasos Totales y Calorías"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, color = "#34495E", size = 16, face = "bold"),  # Título centrado 
+    axis.title = element_text(color = "#34495E", size = 12),  # Color elegante para los ejes
+    axis.text = element_text(color = "#2C3E50"),  # Color de texto de los ejes
+    panel.grid.major = element_line(color = "gray85"),  # Líneas de la cuadrícula más claras
+    panel.grid.minor = element_blank(),  # Quitar líneas menores de la cuadrícula
+    plot.background = element_rect(fill = "white", color = NA),  # Fondo blanco limpio
+    panel.border = element_rect(color = "#2C3E50", fill = NA, linewidth = 1)  # Borde del gráfico en gris oscuro
+  )
+```
+
+<br><br>
+
+A esta correlación vamos a darle un valor agregado diferenciado cada observación según su categoría a través de colores.
+```{r }
+ggplot(df, aes(x = TotalSteps, y = Calories, color = Categoría)) +
+  geom_point(size = 3, alpha = 0.7) +  # Puntos más grandes y con transparencia para suavizar el gráfico
+  geom_smooth(method = "lm", color = "#2C3E50", linetype = "dashed", se = FALSE) +  # Línea de regresión gris oscuro con estilo de línea discontinua
+  labs(
+    x = "Total de Pasos",
+    y = "Calorías",
+    title = "Correlación entre Pasos Totales y Calorías por Categoría",
+    color = "Categoría"  # Etiqueta para la leyenda
+  ) +
+  theme_minimal() +
+  scale_color_manual(values = c(
+    "Ágiles" = "#1E90FF",  # Azul más sofisticado
+    "Promedio" = "#2ECC71",  # Verde menta
+    "Flojas" = "#E74C3C"  # Rojo más sobrio
+  )) +
+  theme(
+    plot.title = element_text(hjust = 0.5, color = "#2C3E50", size = 16, face = "bold"),  # Título centrado, con estilo
+    axis.title = element_text(color = "#34495E", size = 12),  # Colores suaves en títulos de ejes
+    axis.text = element_text(color = "#34495E"),  # Texto de ejes en gris oscuro
+    legend.position = "right",  # Leyenda a la derecha
+    legend.background = element_rect(fill = "white", color = NA),  # Fondo de leyenda limpio
+    legend.key = element_rect(fill = "white", color = NA),  # Fondo de la clave de la leyenda
+    panel.grid.major = element_line(color = "gray85"),  # Líneas de la cuadrícula más suaves
+    panel.grid.minor = element_blank(),  # Elimina cuadrícula menor
+    plot.background = element_rect(fill = "white", color = NA),  # Fondo blanco
+    plot.margin = margin(t = 20, r = 10, b = 10, l = 10)  # Ajusta los márgenes del gráfico
+  )
+```
+<br><br>
+
+## **Recomendaciones**  ##
+
+<br>
+
+<div style="text-align: justify;">
+En consecuencias a los patrones observados, vamos a realizar las recomendaciones a los stakeholders, en esta caso la fundadora de ***BellaBeat*** y la agencia de Marketing. En primer lugar, de la segmentación generada, podemos notar que la mayoría de usuarios está en la categoría **Flojas**, por lo que deberiamos enfocarnos en incentivar el mayor uso del aplicativo y sobre todo motivar un mayor grado de actividad física. Con respecto a los sector **Promedio** y **Ágiles**, debemos generar una fidelización que promueva y haga trascender la marca  y sea lo más sostenible posible en el largo plazo. Por ello, realizaremos las siguientes recomendaciones:
+
+<br>
+
+* A la categoría **Flojas** se le podría poner incentivos para mayor uso como recordatorios, mensajes de aliento en función a logros, información sobre riesgos del sedentarismo, etc
+
+* Caso similar se da con el caso de la categoría **Promedio**. Para este sector el marketing seria de fidelización. Recomendariamos realizar rankings de competición, información de progreso respecto a factores como peso, glucosa para generar incentivos como descuentos en productos de la marca.
+
+* Para el caso de las **Ágiles**, se podría realizar el marketing teniendo como elementos de influencia y apoyo tipo sponsor a los usuarios más destacado, siendo elementos de publicidad y embajadores de la marca.
+</div>
